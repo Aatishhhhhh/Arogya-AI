@@ -25,6 +25,7 @@ origins.extend([
     "http://127.0.0.1:5500",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "https://arogya-ai-backend-sandy.vercel.app",
 ])
 
 app.add_middleware(
