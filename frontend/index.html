@@ -149,7 +149,7 @@
     <header class="chat-head"><button class="chat-back" id="chatBack" aria-label="Back to home">←</button><div class="chat-brand-icon">✦</div><div class="chat-head-copy"><h3>Arogya AI Assistant</h3><p><span class="online-dot"></span>Prototype chat · English</p></div><span class="chat-safe">Health guidance demo</span></header>
     <div class="chat-messages" id="chatMessages" aria-live="polite"><div class="chat-day">START OF CONVERSATION</div><div class="chat-message assistant"><div class="chat-avatar">✦</div><div class="chat-bubble">Hi! I'm Arogya AI. Tell me what health concern you would like to discuss. You can type a message, dictate it using the microphone, or attach a photo.<br><br>This prototype does not provide a confirmed diagnosis or replace a healthcare professional.<span class="chat-time">Arogya AI · demo</span></div></div></div>
     <div class="chat-suggestions" id="chatSuggestions"><button class="chat-suggestion" data-prompt="I have a skin concern">Skin concern</button><button class="chat-suggestion" data-prompt="I want to understand my health reports">Understand a report</button><button class="chat-suggestion" data-prompt="I want to discuss a general health concern">General health concern</button></div>
-    <div class="chat-composer-wrap"><div class="attachment-strip" id="chatAttachments"></div><div class="chat-composer"><textarea id="chatText" class="chat-textarea" rows="2" placeholder="Describe what you're experiencing…" aria-label="Message Arogya AI"></textarea><div class="chat-tools"><button class="tool-btn" id="chatUploadBtn">＋ Add image</button><input type="file" class="chat-image-input" id="chatImageInput" accept="image/*" multiple><button class="tool-btn" id="voiceBtn">🎙 Use voice</button><span class="chat-tool-spacer"></span><button class="send-btn" id="sendChat" aria-label="Send message">↑</button></div></div><p class="chat-footnote">Demo only: messages and images are not sent to the backend. For severe or urgent symptoms, seek professional medical care.</p></div>
+    <div class="chat-composer-wrap"><div class="attachment-strip" id="chatAttachments"></div><div class="chat-composer"><textarea id="chatText" class="chat-textarea" rows="2" placeholder="Describe what you're experiencing…" aria-label="Message Arogya AI"></textarea><div class="chat-tools"><button class="tool-btn" id="chatUploadBtn">＋ Add image</button><input type="file" class="chat-image-input" id="chatImageInput" accept="image/*" multiple><button class="tool-btn" id="voiceBtn">🎙 Use voice</button><span class="chat-tool-spacer"></span><button class="send-btn" id="sendChat" aria-label="Send message">↑</button></div></div><p class="chat-footnote">Text messages are sent to Arogya AI. Image attachments are preview-only and are not analysed by this backend. For severe or urgent symptoms, seek professional medical care.</p></div>
    </section>
   </section>
 
@@ -182,6 +182,7 @@
 <div class="toast" id="toast"></div>
 <script>
 (() => {
+ const API_BASE_URL = (window.AROGYA_API_BASE_URL || "https://arogya-ai-backend-sandy.vercel.app").replace(/\/$/, "");
  const $ = id => document.getElementById(id);
  let email = "", account = {}, files = [], family = [], toastTimer;
  const fieldIds = ["displayName","age","bloodGroup","sex","describe","conditions","allergies","medications","healthNotes"];
@@ -286,15 +287,57 @@
   const bubble=document.createElement("div");bubble.className="chat-bubble";
   if(text){const body=document.createElement("div");body.textContent=text;bubble.appendChild(body);}
   imageItems.forEach(f=>{if(f.url){const im=document.createElement("img");im.src=f.url;im.alt=f.name;im.style.cssText="display:block;max-width:180px;max-height:150px;object-fit:contain;border-radius:10px;margin-top:8px";bubble.appendChild(im);}else{const cap=document.createElement("div");cap.textContent="Attached image: "+f.name;bubble.appendChild(cap);}});
-  const time=document.createElement("span");time.className="chat-time";time.textContent=role==="user"?"You · demo":"Arogya AI · demo";bubble.appendChild(time);wrap.append(av,bubble);host.appendChild(wrap);host.scrollTop=host.scrollHeight;
+  const time=document.createElement("span");time.className="chat-time";time.textContent=role==="user"?"You":"Arogya AI";bubble.appendChild(time);wrap.append(av,bubble);host.appendChild(wrap);host.scrollTop=host.scrollHeight;
  }
  function renderChatAttachments(){
   const host=$("chatAttachments");host.innerHTML="";chatFiles.forEach((f,i)=>{const chip=document.createElement("div");chip.className="chat-attachment";if(f.url){const im=document.createElement("img");im.src=f.url;im.alt="";chip.appendChild(im);}else{const ic=document.createElement("b");ic.textContent="▧";chip.appendChild(ic);}const label=document.createElement("span");label.textContent=f.name;const rm=document.createElement("button");rm.type="button";rm.textContent="×";rm.setAttribute("aria-label","Remove "+f.name);rm.onclick=()=>{chatFiles.splice(i,1);renderChatAttachments();};chip.append(label,rm);host.appendChild(chip);});
  }
- function sendChatMessage(forcedText){
-  const input=$("chatText"),text=(typeof forcedText==="string"?forcedText:input.value).trim();if(!text&&!chatFiles.length){toast("Type a message or attach an image first.");return;}
-  const outgoing=chatFiles.map(f=>({...f}));addChatMessage(text||"Please review the attached image.","user",outgoing);input.value="";chatFiles.splice(0,chatFiles.length);renderChatAttachments();$("chatSuggestions").classList.add("hidden");
-  setTimeout(()=>addChatMessage("Thanks for sharing that. This is a front-end demo, so your message has not been sent to the Arogya AI backend yet. Once integrated, the assistant can use your message and permitted health-card context to guide the next step. If symptoms are severe, rapidly worsening, or urgent, seek professional medical care.","assistant"),350);
+ async function sendChatMessage(forcedText){
+  const input=$("chatText");
+  const text=(typeof forcedText==="string"?forcedText:input.value).trim();
+  if(!text&&!chatFiles.length){toast("Type a message or attach an image first.");return;}
+  if(chatFiles.length){
+    toast("Image attachments are preview-only for now; send a text description for AI analysis.");
+    if(!text)return;
+  }
+  const outgoing=chatFiles.map(f=>({...f}));
+  addChatMessage(text,"user",outgoing);
+  input.value="";
+  chatFiles.splice(0,chatFiles.length);
+  renderChatAttachments();
+  $("chatSuggestions").classList.add("hidden");
+  const sendButton=$("sendChat");
+  const originalLabel=sendButton.textContent;
+  sendButton.disabled=true;
+  sendButton.textContent="…";
+  const typing=addChatMessage("Arogya AI is thinking…","assistant");
+  typing.dataset.typing="true";
+  try{
+    const response=await fetch(`${API_BASE_URL}/arogya/chatting`,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({message:text})
+    });
+    const raw=await response.text();
+    let data={};
+    try{data=raw?JSON.parse(raw):{};}catch{throw new Error(`Backend returned a non-JSON response (HTTP ${response.status}).`);}
+    if(!response.ok)throw new Error(data.detail||`Backend request failed with HTTP ${response.status}.`);
+    if(typeof data.reply!=="string"||!data.reply.trim())throw new Error("Backend returned no reply.");
+    typing.remove();
+    addChatMessage(data.reply,"assistant");
+  }catch(error){
+    console.error("Arogya AI backend request failed:",error);
+    typing.remove();
+    const message=(error instanceof TypeError)
+      ? "Could not reach Arogya AI. Check the backend URL, deployment logs and CORS configuration."
+      : error.message;
+    addChatMessage(message,"assistant");
+    toast("AI request failed. Open browser developer tools for details.");
+  }finally{
+    sendButton.disabled=false;
+    sendButton.textContent=originalLabel;
+    input.focus();
+  }
  }
  function handleChatFiles(list){Array.from(list||[]).forEach(file=>{if(!file.type.startsWith("image/")){toast("Please attach an image file.");return;}if(file.size>8*1024*1024){toast(file.name+" exceeds the 8 MB demo limit.");return;}const f={name:file.name,size:file.size,type:file.type,url:""};chatFiles.push(f);const reader=new FileReader();reader.onload=()=>{f.url=String(reader.result);renderChatAttachments();};reader.readAsDataURL(file);});renderChatAttachments();}
  function startVoiceInput(){
