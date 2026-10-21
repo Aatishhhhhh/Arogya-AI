@@ -1,7 +1,10 @@
-@'
 .env
+.env.*
+!.env.example
+__pycache__/
+*.py[cod]
 .venv/
 venv/
-__pycache__/
-*.pyc
-'@ | Set-Content -Encoding utf8 E:\Arogya-AI\.gitignore
+node_modules/
+.vercel/
+.DS_Store
