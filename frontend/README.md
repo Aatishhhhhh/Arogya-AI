@@ -1,22 +1,16 @@
-# Arogya AI — Web Frontend Prototype
+# Arogya AI — Web Frontend
 
-Static HTML/CSS/JavaScript prototype for the Arogya AI frontend.
+Static HTML/CSS/JavaScript frontend for Arogya AI.
 
-## Local preview
+## Deploy
 
-Open `index.html` in a modern browser. No build step is required.
+Import this repository into Vercel and set the **Root Directory** to `frontend`. Use the `Other` framework preset and leave the build command empty.
 
-## Deploy on Vercel
-
-1. Push this folder to the `Arogya-AI` GitHub repository.
-2. In Vercel, choose **Add New → Project** and import the GitHub repository.
-3. Select **Other** as the Framework Preset.
-4. Keep the project root as `./`. Leave the build command empty; there is no build step.
-5. Deploy.
+The AI chat calls `https://arogya-ai-backend-sandy.vercel.app/arogya/chatting` by default. To override it before deploying, edit `API_BASE_URL` near the top of the JavaScript in `index.html`.
 
 ## Prototype limitations
 
 - Google sign-in is a demo flow, not real OAuth.
-- Health form data is stored in browser localStorage, not a secure medical database.
-- Selected medical-report images are previewed in the current browser session only; files are not uploaded to a backend.
-- AI chat and doctor filters are frontend prototypes. They are not yet connected to a deployed API or live doctor/booking service.
+- Profile/family details are stored in browser localStorage, not protected clinical storage.
+- Medical image uploads are preview-only; the current backend accepts text only.
+- Doctor directory uses sample listings and does not book appointments.
