@@ -288,6 +288,7 @@
   if(text){const body=document.createElement("div");body.textContent=text;bubble.appendChild(body);}
   imageItems.forEach(f=>{if(f.url){const im=document.createElement("img");im.src=f.url;im.alt=f.name;im.style.cssText="display:block;max-width:180px;max-height:150px;object-fit:contain;border-radius:10px;margin-top:8px";bubble.appendChild(im);}else{const cap=document.createElement("div");cap.textContent="Attached image: "+f.name;bubble.appendChild(cap);}});
   const time=document.createElement("span");time.className="chat-time";time.textContent=role==="user"?"You":"Arogya AI";bubble.appendChild(time);wrap.append(av,bubble);host.appendChild(wrap);host.scrollTop=host.scrollHeight;
+  return wrap;
  }
  function renderChatAttachments(){
   const host=$("chatAttachments");host.innerHTML="";chatFiles.forEach((f,i)=>{const chip=document.createElement("div");chip.className="chat-attachment";if(f.url){const im=document.createElement("img");im.src=f.url;im.alt="";chip.appendChild(im);}else{const ic=document.createElement("b");ic.textContent="▧";chip.appendChild(ic);}const label=document.createElement("span");label.textContent=f.name;const rm=document.createElement("button");rm.type="button";rm.textContent="×";rm.setAttribute("aria-label","Remove "+f.name);rm.onclick=()=>{chatFiles.splice(i,1);renderChatAttachments();};chip.append(label,rm);host.appendChild(chip);});
