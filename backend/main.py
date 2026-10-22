@@ -13,7 +13,8 @@ app = FastAPI(
 
 # Exact deployed frontend domains should be supplied through the
 # FRONTEND_ORIGINS environment variable, comma-separated.
-# Local origins below are for development only.
+# The currently deployed production frontend is also allowlisted explicitly
+# so a missing/misconfigured Vercel environment variable does not block it.
 configured_origins = os.getenv("FRONTEND_ORIGINS", "")
 origins = [
     origin.strip().rstrip("/")
@@ -21,12 +22,16 @@ origins = [
     if origin.strip()
 ]
 origins.extend([
+    "https://arogya-ai-frontend-nine.vercel.app",
     "http://localhost:5500",
     "http://127.0.0.1:5500",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "https://arogya-ai-backend-sandy.vercel.app",
 ])
+
+# Deduplicate while preserving order.
+origins = list(dict.fromkeys(origins))
 
 app.add_middleware(
     CORSMiddleware,
