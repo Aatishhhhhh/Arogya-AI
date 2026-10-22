@@ -694,7 +694,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
   if(!text){toast("Describe your symptoms or answer the follow-up first.");return;}
   const button=$("sendSanjeevani");
   if(button.disabled)return;
-  addChatMessage(text,"user");
+  addSanjeevaniMessage(text,"user");
   input.value="";
   $("sanjeevaniSuggestions").classList.add("hidden");
   const originalLabel=button.textContent;
